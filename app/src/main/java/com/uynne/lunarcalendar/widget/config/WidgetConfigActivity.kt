@@ -6,27 +6,31 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.lifecycle.lifecycleScope
+import com.uynne.lunarcalendar.ui.components.GroupedRow
+import com.uynne.lunarcalendar.ui.components.GroupedSection
+import com.uynne.lunarcalendar.ui.components.RowDivider
 import com.uynne.lunarcalendar.ui.theme.LunarCalendarTheme
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME
 import com.uynne.lunarcalendar.widget.WIDGET_THEME_DARK
@@ -53,7 +57,10 @@ class WidgetConfigActivity : ComponentActivity() {
         setContent {
             LunarCalendarTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    ConfigContent(onConfirm = ::saveAndFinish)
+                    ConfigContent(
+                        onConfirm = ::saveAndFinish,
+                        onCancel = { finish() },
+                    )
                 }
             }
         }
@@ -80,44 +87,58 @@ class WidgetConfigActivity : ComponentActivity() {
     }
 }
 
-@androidx.compose.runtime.Composable
-private fun ConfigContent(onConfirm: (String) -> Unit) {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigContent(onConfirm: (String) -> Unit, onCancel: () -> Unit) {
     val options = listOf(
         WIDGET_THEME_SYSTEM to "Theo hệ thống",
         WIDGET_THEME_LIGHT to "Sáng",
         WIDGET_THEME_DARK to "Tối",
     )
     var selected by remember { mutableStateOf(WIDGET_THEME_SYSTEM) }
-    Column(modifier = Modifier.padding(24.dp)) {
-        Text(
-            text = "Cài đặt widget",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            text = "Giao diện",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
-        )
-        options.forEach { (value, label) ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .selectable(selected = selected == value, onClick = { selected = value })
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                RadioButton(selected = selected == value, onClick = { selected = value })
-                Text(text = label, modifier = Modifier.padding(start = 8.dp))
-            }
-        }
-        Button(
-            onClick = { onConfirm(selected) },
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text("Cài đặt widget", style = MaterialTheme.typography.titleLarge) },
+                navigationIcon = {
+                    TextButton(onClick = onCancel) { Text("Hủy") }
+                },
+                actions = {
+                    TextButton(onClick = { onConfirm(selected) }) { Text("Xong") }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
+            )
+        },
+    ) { padding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp),
+                .padding(padding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Text("Xong")
+            Text(
+                text = "Giao diện",
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+            GroupedSection {
+                options.forEachIndexed { index, (value, label) ->
+                    GroupedRow(
+                        label = label,
+                        onClick = { selected = value },
+                        trailing = {
+                            RadioButton(
+                                selected = selected == value,
+                                onClick = { selected = value },
+                            )
+                        },
+                    )
+                    if (index != options.lastIndex) RowDivider()
+                }
+            }
         }
     }
 }

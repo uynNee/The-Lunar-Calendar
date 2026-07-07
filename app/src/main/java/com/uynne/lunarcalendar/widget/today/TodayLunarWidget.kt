@@ -68,9 +68,9 @@ private fun TodayLunarContent(snapshot: WidgetSnapshot) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.background)
-            .cornerRadius(16.dp)
-            .padding(12.dp)
+            .background(GlanceTheme.colors.surface)
+            .cornerRadius(24.dp)
+            .padding(16.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     actionParametersOf(EPOCH_DAY_PARAM to snapshot.today.toEpochDay()),
@@ -81,7 +81,7 @@ private fun TodayLunarContent(snapshot: WidgetSnapshot) {
             Text(
                 text = "${snapshot.today.dayOfMonth}",
                 style = TextStyle(
-                    fontSize = 34.sp,
+                    fontSize = 42.sp,
                     fontWeight = FontWeight.Bold,
                     color = GlanceTheme.colors.primary,
                 ),
@@ -90,22 +90,22 @@ private fun TodayLunarContent(snapshot: WidgetSnapshot) {
             Column {
                 Text(
                     text = snapshot.today.dayOfWeek.vn,
-                    style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onSurfaceVariant),
+                    style = TextStyle(fontSize = 14.sp, color = GlanceTheme.colors.onSurfaceVariant),
                 )
                 val leap = if (snapshot.lunar.isLeapMonth) " nhuận" else ""
                 Text(
                     text = "Ngày ${snapshot.lunar.day} tháng ${snapshot.lunar.month}$leap ÂL",
                     style = TextStyle(
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = GlanceTheme.colors.onBackground,
+                        color = GlanceTheme.colors.onSurface,
                     ),
                 )
             }
         }
         Text(
             text = "Ngày ${snapshot.dayCanChi.display} · Năm ${snapshot.yearCanChi.display}",
-            style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onSurfaceVariant),
+            style = TextStyle(fontSize = 13.sp, color = GlanceTheme.colors.onSurfaceVariant),
         )
         val qualityLabel = if (snapshot.dayQuality == DayQuality.HOANG_DAO) "Hoàng đạo" else "Hắc đạo"
         val holiday = snapshot.holidays.firstOrNull { it.type == HolidayType.PUBLIC }
@@ -113,7 +113,7 @@ private fun TodayLunarContent(snapshot: WidgetSnapshot) {
         Text(
             text = holiday?.let { "$qualityLabel · ${it.name}" } ?: qualityLabel,
             style = TextStyle(
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (snapshot.dayQuality == DayQuality.HOANG_DAO) {
                     GlanceTheme.colors.primary

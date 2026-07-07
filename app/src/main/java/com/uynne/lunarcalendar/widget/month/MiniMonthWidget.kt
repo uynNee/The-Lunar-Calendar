@@ -60,26 +60,26 @@ private fun MiniMonthContent(snapshot: WidgetSnapshot) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.background)
-            .cornerRadius(16.dp)
-            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .background(GlanceTheme.colors.surface)
+            .cornerRadius(24.dp)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
             .clickable(actionStartActivity<MainActivity>()),
     ) {
         Text(
             text = "Tháng ${snapshot.today.monthValue} ${snapshot.today.year} · Năm ${snapshot.yearCanChi.display}",
             style = TextStyle(
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = GlanceTheme.colors.primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = GlanceTheme.colors.onSurface,
             ),
-            modifier = GlanceModifier.padding(bottom = 2.dp),
+            modifier = GlanceModifier.padding(bottom = 5.dp),
         )
         Row(modifier = GlanceModifier.fillMaxWidth()) {
             WEEKDAY_LABELS.forEach { label ->
                 Text(
                     text = label,
                     style = TextStyle(
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         textAlign = TextAlign.Center,
                         color = if (label == "CN") GlanceTheme.colors.error else GlanceTheme.colors.onSurfaceVariant,
                     ),
@@ -113,10 +113,10 @@ private fun androidx.glance.layout.RowScope.MiniDayCell(cell: DayCell) {
     Column(
         modifier = GlanceModifier
             .defaultWeight()
-            .padding(1.dp)
+            .padding(2.dp)
             .then(
                 if (cell.isToday) {
-                    GlanceModifier.background(GlanceTheme.colors.primary).cornerRadius(8.dp)
+                    GlanceModifier.background(GlanceTheme.colors.primary).cornerRadius(12.dp)
                 } else {
                     GlanceModifier
                 },
@@ -126,7 +126,7 @@ private fun androidx.glance.layout.RowScope.MiniDayCell(cell: DayCell) {
         Text(
             text = "${cell.date.dayOfMonth}",
             style = TextStyle(
-                fontSize = 11.sp,
+                fontSize = 13.sp,
                 fontWeight = if (cell.isToday) FontWeight.Bold else FontWeight.Normal,
                 textAlign = TextAlign.Center,
                 color = solarColor,
@@ -135,7 +135,7 @@ private fun androidx.glance.layout.RowScope.MiniDayCell(cell: DayCell) {
         Text(
             text = lunarDayLabel(cell.lunar),
             style = TextStyle(
-                fontSize = 7.sp,
+                fontSize = 8.sp,
                 textAlign = TextAlign.Center,
                 color = lunarColor,
             ),

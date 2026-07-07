@@ -2,18 +2,25 @@ package com.uynne.lunarcalendar.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.uynne.lunarcalendar.ui.day.DayDetailScreen
 import com.uynne.lunarcalendar.ui.event.EventEditorScreen
 import com.uynne.lunarcalendar.ui.month.MonthScreen
+import com.uynne.lunarcalendar.ui.settings.SettingsScreen
+import com.uynne.lunarcalendar.ui.theme.AppearanceMode
 import java.time.LocalDate
 
 @Composable
-fun LunarCalendarApp(today: LocalDate = LocalDate.now(), initialEpochDay: Long? = null) {
+fun LunarCalendarApp(
+    today: LocalDate = LocalDate.now(),
+    initialEpochDay: Long? = null,
+    appearanceMode: AppearanceMode = AppearanceMode.SYSTEM,
+    onAppearanceModeChange: (AppearanceMode) -> Unit = {},
+) {
     val navController = rememberNavController()
     LaunchedEffect(Unit) {
         initialEpochDay?.let { navController.navigate("day/$it") }
@@ -22,7 +29,12 @@ fun LunarCalendarApp(today: LocalDate = LocalDate.now(), initialEpochDay: Long? 
         composable("month") {
             MonthScreen(
                 today = today,
-                onDayClick = { date -> navController.navigate("day/${date.toEpochDay()}") },
+                onOpenDayDetail = { date -> navController.navigate("day/${date.toEpochDay()}") },
+                onAddEvent = { date -> navController.navigate("event/${date.toEpochDay()}") },
+                onEditEvent = { eventId, date ->
+                    navController.navigate("event/${date.toEpochDay()}?eventId=$eventId")
+                },
+                onOpenSettings = { navController.navigate("settings") },
             )
         }
         composable(
@@ -37,6 +49,13 @@ fun LunarCalendarApp(today: LocalDate = LocalDate.now(), initialEpochDay: Long? 
                 onEditEvent = { eventId ->
                     navController.navigate("event/${epochDay}?eventId=$eventId")
                 },
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
+                appearanceMode = appearanceMode,
+                onAppearanceModeChange = onAppearanceModeChange,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(

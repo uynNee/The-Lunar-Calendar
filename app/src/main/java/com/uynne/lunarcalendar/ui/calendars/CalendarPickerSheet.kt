@@ -18,9 +18,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.uynne.lunarcalendar.data.calendar.DeviceCalendar
+import com.uynne.lunarcalendar.ui.components.RowDivider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,14 +37,14 @@ fun CalendarPickerSheet(
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 34.dp),
         ) {
             Text(
                 text = "Hiển thị lịch",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp),
             )
             if (calendars.isEmpty()) {
                 Text(
@@ -52,20 +55,21 @@ fun CalendarPickerSheet(
             calendars.groupBy { it.accountName }.forEach { (account, group) ->
                 Text(
                     text = account,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp),
                 )
-                group.forEach { calendar ->
+                group.forEachIndexed { index, calendar ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 9.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .size(10.dp)
+                                .clip(CircleShape)
                                 .background(Color(calendar.color), CircleShape),
                         )
                         Column(
@@ -73,11 +77,15 @@ fun CalendarPickerSheet(
                                 .weight(1f)
                                 .padding(start = 12.dp),
                         ) {
-                            Text(calendar.name)
+                            Text(
+                                text = calendar.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                            )
                             if (!calendar.isVisible) {
                                 Text(
                                     text = "Ẩn trong Google Lịch",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
@@ -88,6 +96,7 @@ fun CalendarPickerSheet(
                             enabled = calendar.isVisible,
                         )
                     }
+                    if (index != group.lastIndex) RowDivider(modifier = Modifier.padding(start = 22.dp))
                 }
             }
         }

@@ -67,46 +67,46 @@ private fun MoonPhaseContent(snapshot: WidgetSnapshot) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.background)
-            .cornerRadius(16.dp)
-            .padding(8.dp)
+            .background(GlanceTheme.colors.surface)
+            .cornerRadius(24.dp)
+            .padding(12.dp)
             .clickable(actionStartActivity<MainActivity>()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = snapshot.moonPhase.glyph,
-            style = TextStyle(fontSize = 32.sp, textAlign = TextAlign.Center),
+            style = TextStyle(fontSize = 38.sp, textAlign = TextAlign.Center),
         )
         Text(
             text = snapshot.moonPhase.vn,
             style = TextStyle(
-                fontSize = 11.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                color = GlanceTheme.colors.onBackground,
+                color = GlanceTheme.colors.onSurface,
             ),
         )
         Text(
             text = if (snapshot.daysToRam == 0) {
-                "Hôm nay là Rằm"
+                "Rằm hôm nay"
             } else {
-                "Còn ${snapshot.daysToRam} ngày đến Rằm"
+                "Rằm: ${snapshot.daysToRam} ngày"
             },
             style = TextStyle(
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 color = GlanceTheme.colors.primary,
             ),
         )
         Text(
             text = if (snapshot.daysToMung1 == 0) {
-                "Hôm nay là Mùng 1"
+                "Mùng 1 hôm nay"
             } else {
-                "Còn ${snapshot.daysToMung1} ngày đến Mùng 1"
+                "Mùng 1: ${snapshot.daysToMung1} ngày"
             },
             style = TextStyle(
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 color = GlanceTheme.colors.onSurfaceVariant,
             ),

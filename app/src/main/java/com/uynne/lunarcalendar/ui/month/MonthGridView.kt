@@ -2,16 +2,18 @@ package com.uynne.lunarcalendar.ui.month
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import java.time.LocalDate
 @Composable
 fun MonthGridView(
     grid: MonthGrid,
+    selectedDate: LocalDate,
     onDayClick: (LocalDate) -> Unit,
     eventDates: Set<LocalDate> = emptySet(),
 ) {
@@ -41,6 +44,7 @@ fun MonthGridView(
                     Box(modifier = Modifier.weight(1f)) {
                         DayCellView(
                             cell = cell,
+                            selected = cell.date == selectedDate,
                             hasEvents = cell.date in eventDates,
                             onClick = { onDayClick(cell.date) },
                         )
@@ -52,61 +56,66 @@ fun MonthGridView(
 }
 
 @Composable
-private fun DayCellView(cell: DayCell, hasEvents: Boolean, onClick: () -> Unit) {
+private fun DayCellView(cell: DayCell, selected: Boolean, hasEvents: Boolean, onClick: () -> Unit) {
     val extended = LocalExtendedColors.current
     val isSunday = cell.date.dayOfWeek == DayOfWeek.SUNDAY
     val hasPublicHoliday = cell.holidays.any { it.type == HolidayType.PUBLIC }
-    val contentAlpha = if (cell.inCurrentMonth) 1f else 0.38f
+    val contentAlpha = if (cell.inCurrentMonth) 1f else 0.32f
 
     val solarColor = when {
-        cell.isToday -> MaterialTheme.colorScheme.onPrimary
+        selected -> extended.selectedText
         hasPublicHoliday -> extended.holidayRed
         isSunday -> extended.holidayRed
         else -> MaterialTheme.colorScheme.onBackground
-    }.copy(alpha = if (cell.isToday) 1f else contentAlpha)
+    }.copy(alpha = if (selected) 1f else contentAlpha)
 
     val lunarColor = when {
+        selected -> extended.selectedText
         cell.isLunarFirst || cell.isRam -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }.copy(alpha = contentAlpha)
+    }.copy(alpha = if (selected) 0.9f else contentAlpha)
 
     Column(
         modifier = Modifier
-            .aspectRatio(0.85f)
+            .aspectRatio(0.92f)
             .clickable(onClick = onClick)
-            .padding(2.dp),
+            .padding(horizontal = 2.dp, vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(width = 40.dp, height = 34.dp)
                 .background(
-                    color = if (cell.isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
-                    shape = CircleShape,
+                    color = if (selected) extended.selectedFill else Color.Transparent,
+                    shape = RoundedCornerShape(17.dp),
                 ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = "${cell.date.dayOfMonth}",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = solarColor,
+                fontWeight = if (selected || cell.isToday) FontWeight.SemiBold else FontWeight.Medium,
             )
         }
         Text(
             text = lunarDayLabel(cell.lunar),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.bodySmall,
             color = lunarColor,
             fontWeight = if (cell.isLunarFirst || cell.isRam) FontWeight.SemiBold else FontWeight.Normal,
         )
         Row(
-            modifier = Modifier.padding(top = 2.dp),
+            modifier = Modifier
+                .height(8.dp)
+                .padding(top = 3.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (cell.holidays.isNotEmpty()) {
                 Box(
                     modifier = Modifier
-                        .size(4.dp)
+                        .size(4.5.dp)
                         .background(
                             color = (if (hasPublicHoliday) extended.holidayRed else MaterialTheme.colorScheme.tertiary)
                                 .copy(alpha = contentAlpha),
@@ -117,9 +126,9 @@ private fun DayCellView(cell: DayCell, hasEvents: Boolean, onClick: () -> Unit) 
             if (hasEvents) {
                 Box(
                     modifier = Modifier
-                        .size(4.dp)
+                        .size(4.5.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.secondary.copy(alpha = contentAlpha),
+                            color = extended.eventDot.copy(alpha = contentAlpha),
                             shape = CircleShape,
                         ),
                 )
