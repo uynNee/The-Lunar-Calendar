@@ -1,6 +1,7 @@
 package com.uynne.lunarcalendar.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,8 +13,11 @@ import com.uynne.lunarcalendar.ui.month.MonthScreen
 import java.time.LocalDate
 
 @Composable
-fun LunarCalendarApp(today: LocalDate = LocalDate.now()) {
+fun LunarCalendarApp(today: LocalDate = LocalDate.now(), initialEpochDay: Long? = null) {
     val navController = rememberNavController()
+    LaunchedEffect(Unit) {
+        initialEpochDay?.let { navController.navigate("day/$it") }
+    }
     NavHost(navController = navController, startDestination = "month") {
         composable("month") {
             MonthScreen(
