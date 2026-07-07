@@ -22,6 +22,10 @@ class CanChiTest {
         }
         assertEquals("Bính Dần", LunarCalendar.canChiOfMonth(1, 2024).display)
         assertEquals("Canh Thìn", LunarCalendar.canChiOfMonth(3, 1975).display)
+        // Worked examples from the reference doc (year Giáp Thân 2004).
+        assertEquals("Mậu Thìn", LunarCalendar.canChiOfMonth(3, 2004).display)
+        assertEquals("Đinh Mão", LunarCalendar.canChiOfMonth(2, 2004).display)
+        assertEquals("Giáp Tý", LunarCalendar.canChiOfMonth(11, 2003).display)
     }
 
     @Test
@@ -30,6 +34,7 @@ class CanChiTest {
         assertEquals("Giáp Thìn", LunarCalendar.canChiOfDay(10, 2, 2024).display)
         assertEquals("Mậu Ngọ", LunarCalendar.canChiOfDay(1, 1, 2000).display)
         assertEquals("Bính Ngọ", LunarCalendar.canChiOfDay(30, 4, 1975).display)
+        assertEquals("Tân Sửu", LunarCalendar.canChiOfDay(24, 11, 2003).display)
     }
 
     @Test

@@ -43,6 +43,27 @@ class LeapMonthTest {
     }
 
     @Test
+    fun `2004 leap month worked example from the reference doc`() {
+        // Rule.html: leap month spans 21/3/2004..18/4/2004. The doc quotes Sóc A as
+        // 23/11/2003 (the UT day); at UTC+7 the new moon falls on 24/11/2003.
+        assertEquals(2, LunarCalendar.leapMonthOf(2004))
+        assertEquals(LunarDate(1, 2, 2004, true), LunarCalendar.solarToLunar(21, 3, 2004))
+        assertEquals(LunarDate(29, 2, 2004, true), LunarCalendar.solarToLunar(18, 4, 2004))
+        assertEquals(LunarDate(1, 3, 2004, false), LunarCalendar.solarToLunar(19, 4, 2004))
+        assertEquals(LunarDate(30, 10, 2003, false), LunarCalendar.solarToLunar(23, 11, 2003))
+        assertEquals(LunarDate(1, 11, 2003, false), LunarCalendar.solarToLunar(24, 11, 2003))
+    }
+
+    @Test
+    fun `1984 common year worked example from the reference doc`() {
+        // Rule.html: month 11 starts 4/12/1983, month 12 starts 3/1/1984, month 1 starts 2/2/1984.
+        assertEquals(0, LunarCalendar.leapMonthOf(1984))
+        assertEquals(LunarDate(1, 11, 1983, false), LunarCalendar.solarToLunar(4, 12, 1983))
+        assertEquals(SolarDate(3, 1, 1984), LunarCalendar.lunarToSolar(1, 12, 1983))
+        assertEquals(SolarDate(2, 2, 1984), LunarCalendar.lunarToSolar(1, 1, 1984))
+    }
+
+    @Test
     fun `invalid leap flag returns null`() {
         assertNull(LunarCalendar.lunarToSolar(1, 3, 2023, isLeapMonth = true)) // 2023's leap month is 2
         assertNull(LunarCalendar.lunarToSolar(1, 6, 2024, isLeapMonth = true)) // 2024 has no leap month
