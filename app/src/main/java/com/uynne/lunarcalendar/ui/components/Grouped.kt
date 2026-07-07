@@ -41,7 +41,7 @@ fun GroupedSection(
         }
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surface,
         ) {
             Column(content = content)
@@ -55,7 +55,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
         text = text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(start = 16.dp, bottom = 7.dp, top = 6.dp),
+        modifier = modifier.padding(start = 16.dp, bottom = 6.dp, top = 4.dp),
     )
 }
 
@@ -65,6 +65,7 @@ fun GroupedRow(
     value: String? = null,
     modifier: Modifier = Modifier,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    supportingText: String? = null,
     onClick: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
@@ -72,31 +73,44 @@ fun GroupedRow(
     val rowModifier = modifier
         .fillMaxWidth()
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-        .padding(horizontal = 16.dp, vertical = 13.dp)
+        .padding(horizontal = 14.dp, vertical = if (supportingText == null) 9.dp else 8.dp)
 
     Row(
         modifier = rowModifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) {
-            leading()
+            Box(modifier = Modifier.padding(end = 12.dp)) {
+                leading()
+            }
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (supportingText != null) {
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         if (value != null) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = valueColor,
                 fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 12.dp),
             )
         }
         if (trailing != null) {
-            trailing()
+            Box(modifier = Modifier.padding(start = 10.dp)) {
+                trailing()
+            }
         }
     }
 }
@@ -127,14 +141,14 @@ fun EventListRow(event: CalendarEvent, onClick: () -> Unit, modifier: Modifier =
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(9.dp)
-                .clip(CircleShape)
+                .size(width = 4.dp, height = 34.dp)
+                .clip(RoundedCornerShape(2.dp))
                 .background(Color(event.color)),
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -144,18 +158,21 @@ fun EventListRow(event: CalendarEvent, onClick: () -> Unit, modifier: Modifier =
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
             )
-            if (event.isRecurring) {
-                Text(
-                    text = "Lặp lại",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = if (event.isRecurring) "$timeLabel · Lặp lại" else timeLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            text = timeLabel,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
+}
+
+@Composable
+fun SmallColorDot(color: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(8.dp)
+            .clip(CircleShape)
+            .background(color),
+    )
 }

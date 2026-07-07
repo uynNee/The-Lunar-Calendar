@@ -1,9 +1,12 @@
 package com.uynne.lunarcalendar.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
@@ -25,7 +28,34 @@ fun LunarCalendarApp(
     LaunchedEffect(Unit) {
         initialEpochDay?.let { navController.navigate("day/$it") }
     }
-    NavHost(navController = navController, startDestination = "month") {
+    NavHost(
+        navController = navController,
+        startDestination = "month",
+        enterTransition = {
+            slideInHorizontally(
+                animationSpec = tween(240),
+                initialOffsetX = { it / 4 },
+            )
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                animationSpec = tween(220),
+                targetOffsetX = { -it / 5 },
+            )
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                animationSpec = tween(220),
+                initialOffsetX = { -it / 5 },
+            )
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                animationSpec = tween(240),
+                targetOffsetX = { it / 3 },
+            )
+        },
+    ) {
         composable("month") {
             MonthScreen(
                 today = today,

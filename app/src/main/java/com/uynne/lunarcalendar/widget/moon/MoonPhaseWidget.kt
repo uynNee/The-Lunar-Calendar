@@ -27,10 +27,17 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.uynne.lunarcalendar.MainActivity
 import com.uynne.lunarcalendar.lunar.MoonPhase
+import com.uynne.lunarcalendar.widget.KEY_WIDGET_ACCENT_COLOR
+import com.uynne.lunarcalendar.widget.KEY_WIDGET_STYLE
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME
+import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME_MODE
+import com.uynne.lunarcalendar.widget.WidgetAccentColor
 import com.uynne.lunarcalendar.widget.WidgetRefresh
 import com.uynne.lunarcalendar.widget.WidgetSnapshot
+import com.uynne.lunarcalendar.widget.WidgetStyle
 import com.uynne.lunarcalendar.widget.WidgetTheme
+import com.uynne.lunarcalendar.widget.WidgetThemeMode
+import com.uynne.lunarcalendar.widget.appAppearanceForWidgets
 import com.uynne.lunarcalendar.widget.buildWidgetSnapshot
 
 private val MoonPhase.glyph: String
@@ -53,17 +60,25 @@ class MoonPhaseWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val snapshot = buildWidgetSnapshot()
+        val appAppearance = appAppearanceForWidgets(context)
         provideContent {
-            val theme = currentState(KEY_WIDGET_THEME)
-            GlanceTheme(colors = WidgetTheme.fromPref(theme)) {
-                MoonPhaseContent(snapshot)
+            val themePref = currentState(KEY_WIDGET_THEME_MODE) ?: currentState(KEY_WIDGET_THEME)
+            val themeMode = WidgetThemeMode.fromStoredValue(themePref)
+            val style = WidgetStyle.fromStoredValue(currentState(KEY_WIDGET_STYLE))
+            val accent = WidgetAccentColor.fromStoredValue(currentState(KEY_WIDGET_ACCENT_COLOR))
+            GlanceTheme(colors = WidgetTheme.fromMode(themeMode, appAppearance)) {
+                MoonPhaseContent(snapshot, style, accent)
             }
         }
     }
 }
 
 @Composable
-private fun MoonPhaseContent(snapshot: WidgetSnapshot) {
+private fun MoonPhaseContent(
+    snapshot: WidgetSnapshot,
+    style: WidgetStyle,
+    accent: WidgetAccentColor,
+) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -76,7 +91,7 @@ private fun MoonPhaseContent(snapshot: WidgetSnapshot) {
     ) {
         Text(
             text = snapshot.moonPhase.glyph,
-            style = TextStyle(fontSize = 38.sp, textAlign = TextAlign.Center),
+            style = TextStyle(fontSize = if (style == WidgetStyle.MINIMAL) 34.sp else 40.sp, textAlign = TextAlign.Center),
         )
         Text(
             text = snapshot.moonPhase.vn,
@@ -86,31 +101,34 @@ private fun MoonPhaseContent(snapshot: WidgetSnapshot) {
                 textAlign = TextAlign.Center,
                 color = GlanceTheme.colors.onSurface,
             ),
+            maxLines = 1,
         )
-        Text(
-            text = if (snapshot.daysToRam == 0) {
-                "Rằm hôm nay"
-            } else {
-                "Rằm: ${snapshot.daysToRam} ngày"
-            },
-            style = TextStyle(
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                color = GlanceTheme.colors.primary,
-            ),
-        )
-        Text(
-            text = if (snapshot.daysToMung1 == 0) {
-                "Mùng 1 hôm nay"
-            } else {
-                "Mùng 1: ${snapshot.daysToMung1} ngày"
-            },
-            style = TextStyle(
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                color = GlanceTheme.colors.onSurfaceVariant,
-            ),
-        )
+        if (style != WidgetStyle.MINIMAL) {
+            Text(
+                text = if (snapshot.daysToRam == 0) {
+                    "Rằm hôm nay"
+                } else {
+                    "Rằm: ${snapshot.daysToRam} ngày"
+                },
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    color = accent.glanceColor(),
+                ),
+            )
+            Text(
+                text = if (snapshot.daysToMung1 == 0) {
+                    "Mùng 1 hôm nay"
+                } else {
+                    "Mùng 1: ${snapshot.daysToMung1} ngày"
+                },
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    color = GlanceTheme.colors.onSurfaceVariant,
+                ),
+            )
+        }
     }
 }
 

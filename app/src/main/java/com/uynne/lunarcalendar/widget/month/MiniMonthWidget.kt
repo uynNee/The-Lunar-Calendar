@@ -19,8 +19,10 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
@@ -30,10 +32,17 @@ import androidx.glance.text.TextStyle
 import com.uynne.lunarcalendar.MainActivity
 import com.uynne.lunarcalendar.calendar.DayCell
 import com.uynne.lunarcalendar.calendar.lunarDayLabel
+import com.uynne.lunarcalendar.widget.KEY_WIDGET_ACCENT_COLOR
+import com.uynne.lunarcalendar.widget.KEY_WIDGET_STYLE
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME
+import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME_MODE
+import com.uynne.lunarcalendar.widget.WidgetAccentColor
 import com.uynne.lunarcalendar.widget.WidgetRefresh
 import com.uynne.lunarcalendar.widget.WidgetSnapshot
+import com.uynne.lunarcalendar.widget.WidgetStyle
 import com.uynne.lunarcalendar.widget.WidgetTheme
+import com.uynne.lunarcalendar.widget.WidgetThemeMode
+import com.uynne.lunarcalendar.widget.appAppearanceForWidgets
 import com.uynne.lunarcalendar.widget.buildWidgetSnapshot
 
 private val WEEKDAY_LABELS = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
@@ -46,40 +55,56 @@ class MiniMonthWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val snapshot = buildWidgetSnapshot()
+        val appAppearance = appAppearanceForWidgets(context)
         provideContent {
-            val theme = currentState(KEY_WIDGET_THEME)
-            GlanceTheme(colors = WidgetTheme.fromPref(theme)) {
-                MiniMonthContent(snapshot)
+            val themePref = currentState(KEY_WIDGET_THEME_MODE) ?: currentState(KEY_WIDGET_THEME)
+            val themeMode = WidgetThemeMode.fromStoredValue(themePref)
+            val style = WidgetStyle.fromStoredValue(currentState(KEY_WIDGET_STYLE))
+            val accent = WidgetAccentColor.fromStoredValue(currentState(KEY_WIDGET_ACCENT_COLOR))
+            GlanceTheme(colors = WidgetTheme.fromMode(themeMode, appAppearance)) {
+                MiniMonthContent(snapshot, style, accent)
             }
         }
     }
 }
 
 @Composable
-private fun MiniMonthContent(snapshot: WidgetSnapshot) {
+private fun MiniMonthContent(
+    snapshot: WidgetSnapshot,
+    style: WidgetStyle,
+    accent: WidgetAccentColor,
+) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(GlanceTheme.colors.surface)
             .cornerRadius(24.dp)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 13.dp, vertical = 11.dp)
             .clickable(actionStartActivity<MainActivity>()),
     ) {
         Text(
-            text = "Tháng ${snapshot.today.monthValue} ${snapshot.today.year} · Năm ${snapshot.yearCanChi.display}",
+            text = "Tháng ${snapshot.today.monthValue} ${snapshot.today.year}",
             style = TextStyle(
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = GlanceTheme.colors.onSurface,
             ),
-            modifier = GlanceModifier.padding(bottom = 5.dp),
         )
+        if (style != WidgetStyle.MINIMAL) {
+            Text(
+                text = "Năm ${snapshot.yearCanChi.display}",
+                style = TextStyle(fontSize = 10.sp, color = GlanceTheme.colors.onSurfaceVariant),
+                modifier = GlanceModifier.padding(bottom = 3.dp),
+            )
+        } else {
+            Spacer(modifier = GlanceModifier.height(3.dp))
+        }
         Row(modifier = GlanceModifier.fillMaxWidth()) {
             WEEKDAY_LABELS.forEach { label ->
                 Text(
                     text = label,
                     style = TextStyle(
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         textAlign = TextAlign.Center,
                         color = if (label == "CN") GlanceTheme.colors.error else GlanceTheme.colors.onSurfaceVariant,
                     ),
@@ -90,7 +115,7 @@ private fun MiniMonthContent(snapshot: WidgetSnapshot) {
         snapshot.monthGrid.weeks.forEach { week ->
             Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
                 week.forEach { cell ->
-                    MiniDayCell(cell)
+                    MiniDayCell(cell, style, accent)
                 }
             }
         }
@@ -98,7 +123,11 @@ private fun MiniMonthContent(snapshot: WidgetSnapshot) {
 }
 
 @Composable
-private fun androidx.glance.layout.RowScope.MiniDayCell(cell: DayCell) {
+private fun androidx.glance.layout.RowScope.MiniDayCell(
+    cell: DayCell,
+    style: WidgetStyle,
+    accent: WidgetAccentColor,
+) {
     val solarColor = when {
         cell.isToday -> GlanceTheme.colors.onPrimary
         !cell.inCurrentMonth -> GlanceTheme.colors.onSurfaceVariant
@@ -107,16 +136,16 @@ private fun androidx.glance.layout.RowScope.MiniDayCell(cell: DayCell) {
     }
     val lunarColor = when {
         cell.isToday -> GlanceTheme.colors.onPrimary
-        cell.isLunarFirst || cell.isRam -> GlanceTheme.colors.primary
+        cell.isLunarFirst || cell.isRam -> accent.glanceColor()
         else -> GlanceTheme.colors.onSurfaceVariant
     }
     Column(
         modifier = GlanceModifier
             .defaultWeight()
-            .padding(2.dp)
+            .padding(1.dp)
             .then(
                 if (cell.isToday) {
-                    GlanceModifier.background(GlanceTheme.colors.primary).cornerRadius(12.dp)
+                    GlanceModifier.background(accent.glanceColor()).cornerRadius(11.dp)
                 } else {
                     GlanceModifier
                 },
@@ -126,20 +155,22 @@ private fun androidx.glance.layout.RowScope.MiniDayCell(cell: DayCell) {
         Text(
             text = "${cell.date.dayOfMonth}",
             style = TextStyle(
-                fontSize = 13.sp,
-                fontWeight = if (cell.isToday) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 12.sp,
+                fontWeight = if (cell.isToday) FontWeight.Bold else FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 color = solarColor,
             ),
         )
-        Text(
-            text = lunarDayLabel(cell.lunar),
-            style = TextStyle(
-                fontSize = 8.sp,
-                textAlign = TextAlign.Center,
-                color = lunarColor,
-            ),
-        )
+        if (style != WidgetStyle.MINIMAL) {
+            Text(
+                text = lunarDayLabel(cell.lunar),
+                style = TextStyle(
+                    fontSize = 7.sp,
+                    textAlign = TextAlign.Center,
+                    color = lunarColor,
+                ),
+            )
+        }
     }
 }
 
