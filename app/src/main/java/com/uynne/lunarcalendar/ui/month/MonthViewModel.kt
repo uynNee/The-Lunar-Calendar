@@ -14,12 +14,15 @@ import com.uynne.lunarcalendar.data.calendar.groupEventsByDate
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -38,22 +41,34 @@ class MonthViewModel(
     private val _calendars = MutableStateFlow<List<DeviceCalendar>>(emptyList())
     val calendars: StateFlow<List<DeviceCalendar>> = _calendars
 
-    @OptIn(FlowPreview::class)
+    // The provider observer may only be subscribed once permission is granted:
+    // registerContentObserver on the calendar URI throws SecurityException without
+    // READ_CALENDAR. flatMapLatest also re-registers it right after a grant.
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val eventDates: StateFlow<Map<LocalDate, Int>> =
-        combine(
-            visibleMonth,
-            permissionGranted,
-            prefs.hiddenCalendarIds,
-            repository.changes().onStart { emit(Unit) },
-        ) { month, granted, hidden, _ -> Triple(month, granted, hidden) }
-            .debounce(250)
-            .map { (month, granted, hidden) ->
-                if (!granted) return@map emptyMap()
-                val zone = ZoneId.systemDefault()
-                val events = repository
-                    .queryInstances(gridStart(month.minusMonths(1)), gridEndExclusive(month.plusMonths(1)), zone)
-                    .filter { it.calendarId !in hidden }
-                groupEventsByDate(events, zone).mapValues { it.value.size }
+        permissionGranted
+            .flatMapLatest { granted ->
+                if (!granted) {
+                    flowOf(emptyMap())
+                } else {
+                    combine(
+                        visibleMonth,
+                        prefs.hiddenCalendarIds,
+                        repository.changes().onStart { emit(Unit) },
+                    ) { month, hidden, _ -> month to hidden }
+                        .debounce(250)
+                        .map { (month, hidden) ->
+                            val zone = ZoneId.systemDefault()
+                            val events = repository
+                                .queryInstances(
+                                    gridStart(month.minusMonths(1)),
+                                    gridEndExclusive(month.plusMonths(1)),
+                                    zone,
+                                )
+                                .filter { it.calendarId !in hidden }
+                            groupEventsByDate(events, zone).mapValues { it.value.size }
+                        }
+                }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 

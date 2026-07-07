@@ -20,15 +20,27 @@ import kotlinx.coroutines.withContext
 
 class CalendarRepository(private val resolver: ContentResolver) {
 
-    /** Emits whenever the CalendarProvider changes (sync, other apps, our own writes). */
+    /**
+     * Emits whenever the CalendarProvider changes (sync, other apps, our own writes).
+     * Registering the observer itself requires READ_CALENDAR — callers must only
+     * collect this after the permission is granted; the catch below is a backstop
+     * against revoke races so a denial degrades to "no live updates" instead of a crash.
+     */
     fun changes(): Flow<Unit> = callbackFlow {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
                 trySend(Unit)
             }
         }
-        resolver.registerContentObserver(CalendarContract.CONTENT_URI, true, observer)
-        awaitClose { resolver.unregisterContentObserver(observer) }
+        val registered = try {
+            resolver.registerContentObserver(CalendarContract.CONTENT_URI, true, observer)
+            true
+        } catch (_: SecurityException) {
+            false
+        }
+        awaitClose {
+            if (registered) resolver.unregisterContentObserver(observer)
+        }
     }
 
     suspend fun queryCalendars(): List<DeviceCalendar> = withContext(Dispatchers.IO) {
