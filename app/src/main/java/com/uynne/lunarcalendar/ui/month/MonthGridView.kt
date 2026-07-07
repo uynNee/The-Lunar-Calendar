@@ -29,13 +29,21 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Composable
-fun MonthGridView(grid: MonthGrid, onDayClick: (LocalDate) -> Unit) {
+fun MonthGridView(
+    grid: MonthGrid,
+    onDayClick: (LocalDate) -> Unit,
+    eventDates: Set<LocalDate> = emptySet(),
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         grid.weeks.forEach { week ->
             Row(modifier = Modifier.fillMaxWidth()) {
                 week.forEach { cell ->
                     Box(modifier = Modifier.weight(1f)) {
-                        DayCellView(cell = cell, onClick = { onDayClick(cell.date) })
+                        DayCellView(
+                            cell = cell,
+                            hasEvents = cell.date in eventDates,
+                            onClick = { onDayClick(cell.date) },
+                        )
                     }
                 }
             }
@@ -44,7 +52,7 @@ fun MonthGridView(grid: MonthGrid, onDayClick: (LocalDate) -> Unit) {
 }
 
 @Composable
-private fun DayCellView(cell: DayCell, onClick: () -> Unit) {
+private fun DayCellView(cell: DayCell, hasEvents: Boolean, onClick: () -> Unit) {
     val extended = LocalExtendedColors.current
     val isSunday = cell.date.dayOfWeek == DayOfWeek.SUNDAY
     val hasPublicHoliday = cell.holidays.any { it.type == HolidayType.PUBLIC }
@@ -91,19 +99,34 @@ private fun DayCellView(cell: DayCell, onClick: () -> Unit) {
             color = lunarColor,
             fontWeight = if (cell.isLunarFirst || cell.isRam) FontWeight.SemiBold else FontWeight.Normal,
         )
-        if (cell.holidays.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 2.dp)
-                    .size(4.dp)
-                    .background(
-                        color = (if (hasPublicHoliday) extended.holidayRed else MaterialTheme.colorScheme.tertiary)
-                            .copy(alpha = contentAlpha),
-                        shape = CircleShape,
-                    ),
-            )
-        } else {
-            Spacer(modifier = Modifier.padding(top = 2.dp).size(4.dp))
+        Row(
+            modifier = Modifier.padding(top = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            if (cell.holidays.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .background(
+                            color = (if (hasPublicHoliday) extended.holidayRed else MaterialTheme.colorScheme.tertiary)
+                                .copy(alpha = contentAlpha),
+                            shape = CircleShape,
+                        ),
+                )
+            }
+            if (hasEvents) {
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = contentAlpha),
+                            shape = CircleShape,
+                        ),
+                )
+            }
+            if (cell.holidays.isEmpty() && !hasEvents) {
+                Spacer(modifier = Modifier.size(4.dp))
+            }
         }
     }
 }
