@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -36,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +56,7 @@ import com.uynne.lunarcalendar.data.calendar.EventDraft
 import com.uynne.lunarcalendar.ui.components.GroupedRow
 import com.uynne.lunarcalendar.ui.components.GroupedSection
 import com.uynne.lunarcalendar.ui.components.RowDivider
+import com.uynne.lunarcalendar.ui.theme.Dimens
 import com.uynne.lunarcalendar.ui.theme.LocalExtendedColors
 import java.time.Instant
 import java.time.LocalDate
@@ -126,7 +129,7 @@ fun EventEditorScreen(
             onDelete = if (state.isEdit) ({ confirmDelete = true }) else null,
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = Dimens.spaceMD),
         )
     }
 
@@ -167,8 +170,8 @@ private fun EditorForm(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(top = Dimens.spaceXS, bottom = Dimens.spaceLG),
+        verticalArrangement = Arrangement.spacedBy(Dimens.spaceMD),
     ) {
         if (state.saveError) {
             Text(
@@ -191,7 +194,7 @@ private fun EditorForm(
             placeholder = { Text("Tiêu đề") },
             singleLine = true,
             textStyle = MaterialTheme.typography.headlineSmall,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(Dimens.radiusMD),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -199,10 +202,12 @@ private fun EditorForm(
             GroupedRow(
                 label = "Cả ngày",
                 trailing = {
-                    Switch(
-                        checked = draft.allDay,
-                        onCheckedChange = { value -> onUpdate { it.copy(allDay = value) } },
-                    )
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
+                        Switch(
+                            checked = draft.allDay,
+                            onCheckedChange = { value -> onUpdate { it.copy(allDay = value) } },
+                        )
+                    }
                 },
             )
             RowDivider()
@@ -236,10 +241,12 @@ private fun EditorForm(
             GroupedRow(
                 label = "Lặp lại hằng năm",
                 trailing = {
-                    Switch(
-                        checked = draft.yearlyRepeat,
-                        onCheckedChange = { value -> onUpdate { it.copy(yearlyRepeat = value) } },
-                    )
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
+                        Switch(
+                            checked = draft.yearlyRepeat,
+                            onCheckedChange = { value -> onUpdate { it.copy(yearlyRepeat = value) } },
+                        )
+                    }
                 },
             )
         }
@@ -327,7 +334,7 @@ private fun CalendarDropdown(
                 .fillMaxWidth()
                 .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 .clickable { expanded = true }
-                .padding(horizontal = 16.dp, vertical = 13.dp),
+                .padding(horizontal = Dimens.spaceMD, vertical = Dimens.spaceSM),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -350,7 +357,7 @@ private fun CalendarDropdown(
                         text = selected?.name ?: "Chọn lịch",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 6.dp),
+                        modifier = Modifier.padding(start = Dimens.spaceXS),
                     )
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
@@ -374,7 +381,7 @@ private fun CalendarDropdown(
                                     .clip(CircleShape)
                                     .background(Color(calendar.color)),
                             )
-                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Column(modifier = Modifier.padding(start = Dimens.spaceXS)) {
                                 Text(calendar.name)
                                 Text(
                                     calendar.accountName,

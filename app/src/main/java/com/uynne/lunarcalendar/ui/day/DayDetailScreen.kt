@@ -52,6 +52,7 @@ import com.uynne.lunarcalendar.ui.components.GroupedRow
 import com.uynne.lunarcalendar.ui.components.GroupedSection
 import com.uynne.lunarcalendar.ui.components.RowDivider
 import com.uynne.lunarcalendar.ui.permissions.rememberCalendarPermissionState
+import com.uynne.lunarcalendar.ui.theme.Dimens
 import com.uynne.lunarcalendar.ui.theme.LocalExtendedColors
 import com.uynne.lunarcalendar.ui.theme.LunarCalendarTheme
 import java.time.DayOfWeek
@@ -135,16 +136,13 @@ fun DayDetailScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = Dimens.spaceMD, vertical = Dimens.spaceXS),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceSM),
         ) {
             LunarSummaryHero(
                 date = date,
-                lunarLabel = "Ngày ${lunar.day} tháng ${lunar.month}$leap năm ${yearCanChi.display}",
-                canChi = dayCanChi.display,
+                lunarLabel = "Ngày ${lunar.day} tháng ${lunar.month}$leap · Ngày ${dayCanChi.display}",
                 phase = phase,
-                quality = quality,
-                qualityColor = qualityColor,
             )
 
             GroupedSection(title = "Can Chi") {
@@ -182,7 +180,7 @@ fun DayDetailScreen(
                         text = "Không có sự kiện",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier.padding(horizontal = Dimens.spaceMD, vertical = Dimens.spaceSM),
                     )
                 }
                 holidays.forEachIndexed { index, holiday ->
@@ -191,14 +189,14 @@ fun DayDetailScreen(
                 }
                 events.forEachIndexed { index, event ->
                     EventListRow(event = event, onClick = { onEditEvent(event.eventId) })
-                    if (index != events.lastIndex) RowDivider(modifier = Modifier.padding(start = 21.dp))
+                    if (index != events.lastIndex) RowDivider(modifier = Modifier.padding(start = Dimens.spaceMD))
                 }
                 when {
                     !permission.granted -> {
                         RowDivider()
                         TextButton(
                             onClick = if (permission.deniedOnce) permission.openSettings else permission.request,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = Dimens.spaceXS, vertical = Dimens.spaceXXS),
                         ) {
                             Text(
                                 if (permission.deniedOnce) {
@@ -213,7 +211,7 @@ fun DayDetailScreen(
                         RowDivider()
                         TextButton(
                             onClick = { onAddEvent(date) },
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = Dimens.spaceXS, vertical = Dimens.spaceXXS),
                         ) {
                             Text("+ Thêm sự kiện")
                         }
@@ -228,18 +226,15 @@ fun DayDetailScreen(
 private fun LunarSummaryHero(
     date: LocalDate,
     lunarLabel: String,
-    canChi: String,
     phase: MoonPhase,
-    quality: String,
-    qualityColor: Color,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(Dimens.radiusLG),
         color = MaterialTheme.colorScheme.surface,
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(Dimens.spaceMD),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -258,39 +253,20 @@ private fun LunarSummaryHero(
                         text = "/${date.monthValue}/${date.year}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 3.dp, bottom = 5.dp),
+                        modifier = Modifier.padding(start = Dimens.spaceXXS, bottom = Dimens.spaceXXS),
                     )
                 }
                 Text(
                     text = lunarLabel,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = "Ngày $canChi",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = Dimens.spaceXXS),
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                MoonBadge(phase, large = true)
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = qualityColor.copy(alpha = 0.14f),
-                    modifier = Modifier.padding(top = 8.dp),
-                ) {
-                    Text(
-                        text = quality,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = qualityColor,
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.width(Dimens.spaceSM))
+            MoonBadge(phase, large = true)
         }
     }
 }
@@ -300,7 +276,7 @@ private fun MoonBadge(phase: MoonPhase, large: Boolean = false) {
     Surface(
         shape = CircleShape,
         color = LocalExtendedColors.current.moonAccent.copy(alpha = 0.16f),
-        modifier = Modifier.size(if (large) 58.dp else 34.dp),
+        modifier = Modifier.size(if (large) Dimens.iconLG else Dimens.iconMD),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -315,7 +291,7 @@ private fun MoonBadge(phase: MoonPhase, large: Boolean = false) {
 private fun QualityDot(color: Color) {
     Box(
         modifier = Modifier
-            .size(34.dp)
+            .size(Dimens.iconMD)
             .clip(CircleShape)
             .background(color.copy(alpha = 0.16f)),
         contentAlignment = Alignment.Center,

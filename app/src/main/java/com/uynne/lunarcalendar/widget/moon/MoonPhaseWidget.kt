@@ -79,6 +79,11 @@ private fun MoonPhaseContent(
     style: WidgetStyle,
     accent: WidgetAccentColor,
 ) {
+    val showPhaseName = style != WidgetStyle.MINIMAL
+    val showDate = style == WidgetStyle.CALENDAR || style == WidgetStyle.COMBINED
+    val showLunarDate = style == WidgetStyle.LUNAR || style == WidgetStyle.COMBINED
+    val showCountdowns = style == WidgetStyle.MOON || style == WidgetStyle.COMBINED
+    val leap = if (snapshot.lunar.isLeapMonth) " nhuận" else ""
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -93,17 +98,31 @@ private fun MoonPhaseContent(
             text = snapshot.moonPhase.glyph,
             style = TextStyle(fontSize = if (style == WidgetStyle.MINIMAL) 34.sp else 40.sp, textAlign = TextAlign.Center),
         )
-        Text(
-            text = snapshot.moonPhase.vn,
-            style = TextStyle(
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                color = GlanceTheme.colors.onSurface,
-            ),
-            maxLines = 1,
-        )
-        if (style != WidgetStyle.MINIMAL) {
+        if (showPhaseName) {
+            Text(
+                text = snapshot.moonPhase.vn,
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    color = GlanceTheme.colors.onSurface,
+                ),
+                maxLines = 1,
+            )
+        }
+        if (showDate) {
+            Text(
+                text = "${snapshot.today.dayOfMonth}/${snapshot.today.monthValue}/${snapshot.today.year}",
+                style = TextStyle(fontSize = 12.sp, textAlign = TextAlign.Center, color = GlanceTheme.colors.onSurfaceVariant),
+            )
+        }
+        if (showLunarDate) {
+            Text(
+                text = "Ngày ${snapshot.lunar.day} tháng ${snapshot.lunar.month}$leap ÂL",
+                style = TextStyle(fontSize = 12.sp, textAlign = TextAlign.Center, color = accent.glanceColor()),
+            )
+        }
+        if (showCountdowns) {
             Text(
                 text = if (snapshot.daysToRam == 0) {
                     "Rằm hôm nay"

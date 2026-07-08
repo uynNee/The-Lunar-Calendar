@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,27 +27,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.uynne.lunarcalendar.data.calendar.CalendarGraph
+import com.uynne.lunarcalendar.ui.calendars.CalendarPickerSheet
 import com.uynne.lunarcalendar.ui.components.GroupedRow
 import com.uynne.lunarcalendar.ui.components.GroupedSection
 import com.uynne.lunarcalendar.ui.components.RowDivider
+import com.uynne.lunarcalendar.ui.month.MonthViewModel
+import com.uynne.lunarcalendar.ui.permissions.rememberCalendarPermissionState
 import com.uynne.lunarcalendar.ui.theme.AppearanceMode
+import com.uynne.lunarcalendar.ui.theme.Dimens
 import com.uynne.lunarcalendar.widget.WidgetAccentColor
 import com.uynne.lunarcalendar.widget.WidgetDefaultsPrefs
+import com.uynne.lunarcalendar.widget.WidgetRefresh
 import com.uynne.lunarcalendar.widget.WidgetStyle
 import com.uynne.lunarcalendar.widget.WidgetThemeMode
+import java.time.DayOfWeek
+import kotlinx.coroutines.launch
 
 private enum class PickerTarget {
     APP_APPEARANCE,
     WIDGET_THEME,
     WIDGET_STYLE,
     WIDGET_ACCENT,
+    WEEK_START,
 }
+
+private val DayOfWeek.label: String
+    get() = if (this == DayOfWeek.SUNDAY) "Chủ Nhật" else "Thứ Hai"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,14 +71,23 @@ fun SettingsScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val calendarPrefs = remember { CalendarGraph.prefs(context) }
     var widgetDefaults by remember {
         mutableStateOf(WidgetDefaultsPrefs.get(context))
     }
     var pickerTarget by remember { mutableStateOf<PickerTarget?>(null) }
+    var showCalendarPicker by remember { mutableStateOf(false) }
+    val weekStart by calendarPrefs.weekStart.collectAsStateWithLifecycle()
+    val permission = rememberCalendarPermissionState()
+    val monthViewModel: MonthViewModel = viewModel(factory = MonthViewModel.Factory)
+    val calendars by monthViewModel.calendars.collectAsStateWithLifecycle()
+    val hiddenIds by monthViewModel.hiddenIds.collectAsStateWithLifecycle()
 
     fun updateWidgetDefaults(defaults: WidgetDefaultsPrefs.Defaults) {
         widgetDefaults = defaults
         WidgetDefaultsPrefs.set(context, defaults)
+        scope.launch { WidgetRefresh.pushDefaultsToAllWidgets(context, defaults) }
     }
 
     Scaffold(
@@ -89,14 +111,14 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = Dimens.spaceMD, vertical = Dimens.spaceXS),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceSM),
         ) {
             Text(
                 text = "Lịch Âm",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+                modifier = Modifier.padding(start = Dimens.spaceXXS, top = Dimens.spaceXXS),
             )
 
             GroupedSection(title = "Giao diện") {
@@ -123,23 +145,55 @@ fun SettingsScreen(
                 GroupedRow(
                     label = "Màu nhấn",
                     value = widgetDefaults.accentColor.label,
-                    leading = { AccentDot(widgetDefaults.accentColor) },
+                    trailing = { AccentDot(widgetDefaults.accentColor) },
                     onClick = { pickerTarget = PickerTarget.WIDGET_ACCENT },
                 )
             }
 
             GroupedSection(title = "Lịch") {
                 GroupedRow(
-                    label = "Tuần bắt đầu",
-                    value = "Thứ Hai",
+                    label = "Ngày đầu tuần",
+                    value = weekStart.label,
+                    onClick = { pickerTarget = PickerTarget.WEEK_START },
+                )
+                RowDivider()
+                GroupedRow(
+                    label = "Lịch hiển thị",
+                    value = if (permission.granted) null else "Cần cấp quyền",
+                    onClick = {
+                        if (permission.granted) {
+                            monthViewModel.refreshCalendars()
+                            showCalendarPicker = true
+                        } else if (permission.deniedOnce) {
+                            permission.openSettings()
+                        } else {
+                            permission.request()
+                        }
+                    },
                 )
                 RowDivider()
                 GroupedRow(
                     label = "Google Calendar",
-                    value = "Bật khi cấp quyền",
+                    value = if (permission.granted) "Đã cấp quyền" else "Chưa cấp quyền",
+                    onClick = if (permission.granted) {
+                        null
+                    } else if (permission.deniedOnce) {
+                        permission.openSettings
+                    } else {
+                        permission.request
+                    },
                 )
             }
         }
+    }
+
+    if (showCalendarPicker) {
+        CalendarPickerSheet(
+            calendars = calendars,
+            hiddenIds = hiddenIds,
+            onToggle = monthViewModel::toggleCalendar,
+            onDismiss = { showCalendarPicker = false },
+        )
     }
 
     when (pickerTarget) {
@@ -188,6 +242,17 @@ fun SettingsScreen(
             },
             onDismiss = { pickerTarget = null },
         )
+        PickerTarget.WEEK_START -> OptionDialog(
+            title = "Ngày đầu tuần",
+            options = listOf(DayOfWeek.MONDAY, DayOfWeek.SUNDAY),
+            selected = weekStart,
+            label = { it.label },
+            onSelect = {
+                calendarPrefs.setWeekStart(it)
+                pickerTarget = null
+            },
+            onDismiss = { pickerTarget = null },
+        )
         null -> Unit
     }
 }
@@ -196,7 +261,7 @@ fun SettingsScreen(
 private fun AccentDot(accent: WidgetAccentColor) {
     Box(
         modifier = Modifier
-            .size(18.dp)
+            .size(Dimens.iconSM)
             .clip(CircleShape)
             .background(accent.light),
     )

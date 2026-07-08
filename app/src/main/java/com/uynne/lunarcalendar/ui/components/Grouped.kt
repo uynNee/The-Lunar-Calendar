@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.uynne.lunarcalendar.data.calendar.CalendarEvent
+import com.uynne.lunarcalendar.ui.theme.Dimens
 import com.uynne.lunarcalendar.ui.theme.LocalExtendedColors
 import java.time.Instant
 import java.time.ZoneId
@@ -41,7 +43,7 @@ fun GroupedSection(
         }
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Dimens.radiusMD),
             color = MaterialTheme.colorScheme.surface,
         ) {
             Column(content = content)
@@ -55,7 +57,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
         text = text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(start = 16.dp, bottom = 6.dp, top = 4.dp),
+        modifier = modifier.padding(start = Dimens.spaceMD, bottom = Dimens.spaceXS, top = Dimens.spaceXXS),
     )
 }
 
@@ -70,17 +72,19 @@ fun GroupedRow(
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
+    val targetHeight = if (supportingText == null) Dimens.rowHeightSingle else Dimens.rowHeightDouble
     val rowModifier = modifier
         .fillMaxWidth()
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-        .padding(horizontal = 14.dp, vertical = if (supportingText == null) 9.dp else 8.dp)
+        .heightIn(min = targetHeight)
+        .padding(horizontal = Dimens.spaceMD)
 
     Row(
         modifier = rowModifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) {
-            Box(modifier = Modifier.padding(end = 12.dp)) {
+            Box(modifier = Modifier.padding(end = Dimens.spaceSM)) {
                 leading()
             }
         }
@@ -104,11 +108,11 @@ fun GroupedRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = valueColor,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 12.dp),
+                modifier = Modifier.padding(start = Dimens.spaceSM),
             )
         }
         if (trailing != null) {
-            Box(modifier = Modifier.padding(start = 10.dp)) {
+            Box(modifier = Modifier.padding(start = Dimens.spaceSM)) {
                 trailing()
             }
         }
@@ -119,9 +123,9 @@ fun GroupedRow(
 fun RowDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .padding(start = 16.dp)
+            .padding(start = Dimens.spaceMD)
             .fillMaxWidth()
-            .height(0.5.dp)
+            .height(Dimens.dividerThickness)
             .background(LocalExtendedColors.current.separator),
     )
 }
@@ -141,13 +145,14 @@ fun EventListRow(event: CalendarEvent, onClick: () -> Unit, modifier: Modifier =
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 9.dp),
+            .heightIn(min = Dimens.rowHeightDouble)
+            .padding(horizontal = Dimens.spaceMD),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceSM),
     ) {
         Box(
             modifier = Modifier
-                .size(width = 4.dp, height = 34.dp)
+                .size(width = 4.dp, height = Dimens.iconMD)
                 .clip(RoundedCornerShape(2.dp))
                 .background(Color(event.color)),
         )

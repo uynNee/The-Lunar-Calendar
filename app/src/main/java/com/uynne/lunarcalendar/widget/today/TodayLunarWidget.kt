@@ -34,6 +34,7 @@ import androidx.glance.text.TextStyle
 import com.uynne.lunarcalendar.MainActivity
 import com.uynne.lunarcalendar.data.HolidayType
 import com.uynne.lunarcalendar.lunar.DayQuality
+import com.uynne.lunarcalendar.lunar.MoonPhase
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_ACCENT_COLOR
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_STYLE
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME
@@ -49,6 +50,18 @@ import com.uynne.lunarcalendar.widget.buildWidgetSnapshot
 import com.uynne.lunarcalendar.widget.vn
 
 val EPOCH_DAY_PARAM = ActionParameters.Key<Long>(MainActivity.EXTRA_EPOCH_DAY)
+
+private val MoonPhase.glyph: String
+    get() = when (this) {
+        MoonPhase.NEW_MOON -> "🌑"
+        MoonPhase.WAXING_CRESCENT -> "🌒"
+        MoonPhase.FIRST_QUARTER -> "🌓"
+        MoonPhase.WAXING_GIBBOUS -> "🌔"
+        MoonPhase.FULL_MOON -> "🌕"
+        MoonPhase.WANING_GIBBOUS -> "🌖"
+        MoonPhase.LAST_QUARTER -> "🌗"
+        MoonPhase.WANING_CRESCENT -> "🌘"
+    }
 
 class TodayLunarWidget : GlanceAppWidget() {
 
@@ -86,6 +99,11 @@ private fun TodayLunarContent(
     val qualityLabel = if (snapshot.dayQuality == DayQuality.HOANG_DAO) "Hoàng đạo" else "Hắc đạo"
     val holiday = snapshot.holidays.firstOrNull { it.type == HolidayType.PUBLIC }
         ?: snapshot.holidays.firstOrNull()
+    val lunarLine = "Ngày ${snapshot.lunar.day} tháng ${snapshot.lunar.month}$leap ÂL"
+    val showLunarLine = style != WidgetStyle.MINIMAL
+    val showCanChi = style == WidgetStyle.CALENDAR || style == WidgetStyle.COMBINED
+    val showMoonLine = style == WidgetStyle.MOON || style == WidgetStyle.COMBINED
+    val emphasizeLunar = style == WidgetStyle.LUNAR
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -100,7 +118,7 @@ private fun TodayLunarContent(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "${snapshot.today.dayOfMonth}",
+                text = if (emphasizeLunar) "${snapshot.lunar.day}" else "${snapshot.today.dayOfMonth}",
                 style = TextStyle(
                     fontSize = if (style == WidgetStyle.MINIMAL) 38.sp else 40.sp,
                     fontWeight = FontWeight.Bold,
@@ -115,7 +133,13 @@ private fun TodayLunarContent(
                     style = TextStyle(fontSize = 13.sp, color = GlanceTheme.colors.onSurfaceVariant),
                 )
                 Text(
-                    text = "Ngày ${snapshot.lunar.day} tháng ${snapshot.lunar.month}$leap ÂL",
+                    text = if (emphasizeLunar) {
+                        "${snapshot.today.dayOfMonth}/${snapshot.today.monthValue}/${snapshot.today.year}"
+                    } else if (showLunarLine) {
+                        lunarLine
+                    } else {
+                        ""
+                    },
                     style = TextStyle(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
@@ -124,12 +148,27 @@ private fun TodayLunarContent(
                 )
             }
         }
-        if (style != WidgetStyle.MINIMAL) {
+        if (emphasizeLunar) {
+            Text(
+                text = "$lunarLine · ${snapshot.dayCanChi.display}",
+                style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onSurfaceVariant),
+                modifier = GlanceModifier.padding(top = 5.dp),
+            )
+        } else if (showCanChi) {
             Text(
                 text = "Ngày ${snapshot.dayCanChi.display} · Năm ${snapshot.yearCanChi.display}",
                 style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onSurfaceVariant),
                 modifier = GlanceModifier.padding(top = 5.dp),
             )
+        }
+        if (showMoonLine) {
+            Text(
+                text = "${snapshot.moonPhase.glyph} ${snapshot.moonPhase.vn}",
+                style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = GlanceTheme.colors.onSurface),
+                modifier = GlanceModifier.padding(top = 5.dp),
+            )
+        }
+        if (style == WidgetStyle.COMBINED) {
             Text(
                 text = holiday?.let { "$qualityLabel · ${it.name}" } ?: qualityLabel,
                 style = TextStyle(

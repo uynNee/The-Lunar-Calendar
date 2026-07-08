@@ -32,6 +32,7 @@ import androidx.glance.text.TextStyle
 import com.uynne.lunarcalendar.MainActivity
 import com.uynne.lunarcalendar.calendar.DayCell
 import com.uynne.lunarcalendar.calendar.lunarDayLabel
+import com.uynne.lunarcalendar.lunar.MoonPhase
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_ACCENT_COLOR
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_STYLE
 import com.uynne.lunarcalendar.widget.KEY_WIDGET_THEME
@@ -46,6 +47,18 @@ import com.uynne.lunarcalendar.widget.appAppearanceForWidgets
 import com.uynne.lunarcalendar.widget.buildWidgetSnapshot
 
 private val WEEKDAY_LABELS = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
+
+private val MoonPhase.glyph: String
+    get() = when (this) {
+        MoonPhase.NEW_MOON -> "🌑"
+        MoonPhase.WAXING_CRESCENT -> "🌒"
+        MoonPhase.FIRST_QUARTER -> "🌓"
+        MoonPhase.WAXING_GIBBOUS -> "🌔"
+        MoonPhase.FULL_MOON -> "🌕"
+        MoonPhase.WANING_GIBBOUS -> "🌖"
+        MoonPhase.LAST_QUARTER -> "🌗"
+        MoonPhase.WANING_CRESCENT -> "🌘"
+    }
 
 class MiniMonthWidget : GlanceAppWidget() {
 
@@ -74,6 +87,9 @@ private fun MiniMonthContent(
     style: WidgetStyle,
     accent: WidgetAccentColor,
 ) {
+    val showYearLabel = style != WidgetStyle.MINIMAL
+    val showLunarLabels = style == WidgetStyle.LUNAR || style == WidgetStyle.COMBINED
+    val showMoonBadge = style == WidgetStyle.MOON || style == WidgetStyle.COMBINED
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -82,15 +98,24 @@ private fun MiniMonthContent(
             .padding(horizontal = 13.dp, vertical = 11.dp)
             .clickable(actionStartActivity<MainActivity>()),
     ) {
-        Text(
-            text = "Tháng ${snapshot.today.monthValue} ${snapshot.today.year}",
-            style = TextStyle(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = GlanceTheme.colors.onSurface,
-            ),
-        )
-        if (style != WidgetStyle.MINIMAL) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth()) {
+            Text(
+                text = "Tháng ${snapshot.today.monthValue} ${snapshot.today.year}",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GlanceTheme.colors.onSurface,
+                ),
+                modifier = GlanceModifier.defaultWeight(),
+            )
+            if (showMoonBadge) {
+                Text(
+                    text = snapshot.moonPhase.glyph,
+                    style = TextStyle(fontSize = 14.sp),
+                )
+            }
+        }
+        if (showYearLabel) {
             Text(
                 text = "Năm ${snapshot.yearCanChi.display}",
                 style = TextStyle(fontSize = 10.sp, color = GlanceTheme.colors.onSurfaceVariant),
@@ -115,7 +140,7 @@ private fun MiniMonthContent(
         snapshot.monthGrid.weeks.forEach { week ->
             Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
                 week.forEach { cell ->
-                    MiniDayCell(cell, style, accent)
+                    MiniDayCell(cell, showLunarLabels, accent)
                 }
             }
         }
@@ -125,7 +150,7 @@ private fun MiniMonthContent(
 @Composable
 private fun androidx.glance.layout.RowScope.MiniDayCell(
     cell: DayCell,
-    style: WidgetStyle,
+    showLunarLabel: Boolean,
     accent: WidgetAccentColor,
 ) {
     val solarColor = when {
@@ -161,7 +186,7 @@ private fun androidx.glance.layout.RowScope.MiniDayCell(
                 color = solarColor,
             ),
         )
-        if (style != WidgetStyle.MINIMAL) {
+        if (showLunarLabel) {
             Text(
                 text = lunarDayLabel(cell.lunar),
                 style = TextStyle(

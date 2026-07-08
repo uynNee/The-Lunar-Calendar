@@ -11,6 +11,7 @@ import com.uynne.lunarcalendar.data.calendar.CalendarGraph
 import com.uynne.lunarcalendar.data.calendar.CalendarRepository
 import com.uynne.lunarcalendar.data.calendar.DeviceCalendar
 import com.uynne.lunarcalendar.data.calendar.groupEventsByDate
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -37,6 +38,7 @@ class MonthViewModel(
     private val permissionGranted = MutableStateFlow(false)
 
     val hiddenIds: StateFlow<Set<Long>> = prefs.hiddenCalendarIds
+    val weekStart: StateFlow<DayOfWeek> = prefs.weekStart
 
     private val _calendars = MutableStateFlow<List<DeviceCalendar>>(emptyList())
     val calendars: StateFlow<List<DeviceCalendar>> = _calendars
@@ -54,15 +56,16 @@ class MonthViewModel(
                     combine(
                         visibleMonth,
                         prefs.hiddenCalendarIds,
+                        prefs.weekStart,
                         repository.changes().onStart { emit(Unit) },
-                    ) { month, hidden, _ -> month to hidden }
+                    ) { month, hidden, weekStart, _ -> Triple(month, hidden, weekStart) }
                         .debounce(250)
-                        .map { (month, hidden) ->
+                        .map { (month, hidden, weekStart) ->
                             val zone = ZoneId.systemDefault()
                             val events = repository
                                 .queryInstances(
-                                    gridStart(month.minusMonths(1)),
-                                    gridEndExclusive(month.plusMonths(1)),
+                                    gridStart(month.minusMonths(1), weekStart),
+                                    gridEndExclusive(month.plusMonths(1), weekStart),
                                     zone,
                                 )
                                 .filter { it.calendarId !in hidden }
@@ -92,13 +95,15 @@ class MonthViewModel(
     }
 
     companion object {
-        /** Mirrors buildMonthGrid's Monday-first 6x7 window. */
-        fun gridStart(month: YearMonth): LocalDate {
+        /** Mirrors buildMonthGrid's 6x7 window. */
+        fun gridStart(month: YearMonth, weekStart: DayOfWeek): LocalDate {
             val first = month.atDay(1)
-            return first.minusDays((first.dayOfWeek.value - 1).toLong())
+            val offset = (first.dayOfWeek.value - weekStart.value + 7) % 7
+            return first.minusDays(offset.toLong())
         }
 
-        fun gridEndExclusive(month: YearMonth): LocalDate = gridStart(month).plusDays(42)
+        fun gridEndExclusive(month: YearMonth, weekStart: DayOfWeek): LocalDate =
+            gridStart(month, weekStart).plusDays(42)
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

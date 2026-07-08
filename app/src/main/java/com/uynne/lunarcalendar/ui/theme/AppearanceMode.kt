@@ -7,6 +7,6 @@ enum class AppearanceMode(val storedValue: String, val label: String) {
 
     companion object {
         fun fromStoredValue(value: String?): AppearanceMode =
-            entries.firstOrNull { it.storedValue == value } ?: SYSTEM
+            entries.firstOrNull { it.storedValue == value } ?: LIGHT
     }
 }

@@ -5,7 +5,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -31,6 +33,27 @@ object WidgetRefresh {
         TodayLunarWidget().updateAll(context)
         MiniMonthWidget().updateAll(context)
         MoonPhaseWidget().updateAll(context)
+    }
+
+    /** Pushes new defaults into every already-placed widget's own Glance state, then redraws them. */
+    suspend fun pushDefaultsToAllWidgets(context: Context, defaults: WidgetDefaultsPrefs.Defaults) {
+        val manager = GlanceAppWidgetManager(context)
+        val idsByType = listOf(
+            manager.getGlanceIds(TodayLunarWidget::class.java),
+            manager.getGlanceIds(MiniMonthWidget::class.java),
+            manager.getGlanceIds(MoonPhaseWidget::class.java),
+        ).flatten()
+        idsByType.forEach { glanceId ->
+            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                prefs.toMutablePreferences().apply {
+                    this[KEY_WIDGET_THEME_MODE] = defaults.themeMode.storedValue
+                    this[KEY_WIDGET_THEME] = defaults.themeMode.storedValue
+                    this[KEY_WIDGET_STYLE] = defaults.style.storedValue
+                    this[KEY_WIDGET_ACCENT_COLOR] = defaults.accentColor.storedValue
+                }
+            }
+        }
+        updateAllWidgets(context)
     }
 
     /**

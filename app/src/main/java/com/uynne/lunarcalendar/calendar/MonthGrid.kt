@@ -4,6 +4,7 @@ import com.uynne.lunarcalendar.data.Holiday
 import com.uynne.lunarcalendar.data.Holidays
 import com.uynne.lunarcalendar.lunar.LunarCalendar
 import com.uynne.lunarcalendar.lunar.LunarDate
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -23,10 +24,11 @@ data class MonthGrid(
     val weeks: List<List<DayCell>>,
 )
 
-/** Fixed 6x7 Monday-first grid including leading/trailing days of adjacent months. */
-fun buildMonthGrid(yearMonth: YearMonth, today: LocalDate): MonthGrid {
+/** Fixed 6x7 grid (starting on [weekStart]) including leading/trailing days of adjacent months. */
+fun buildMonthGrid(yearMonth: YearMonth, today: LocalDate, weekStart: DayOfWeek = DayOfWeek.MONDAY): MonthGrid {
     val first = yearMonth.atDay(1)
-    val start = first.minusDays((first.dayOfWeek.value - 1).toLong())
+    val offset = (first.dayOfWeek.value - weekStart.value + 7) % 7
+    val start = first.minusDays(offset.toLong())
     val cells = (0 until 42).map { i ->
         val date = start.plusDays(i.toLong())
         DayCell(

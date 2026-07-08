@@ -16,6 +16,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.LunarCalendar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,6 +28,7 @@
         <activity
             android:name=".widget.config.WidgetConfigActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.LunarCalendar">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
